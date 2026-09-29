@@ -1,0 +1,331 @@
+/* =====================================================================
+   Cinematic South Indian Wedding Invitation — styles
+   ---------------------------------------------------------------------
+   One stylesheet on purpose: the visual language is a single system and
+   splitting it per component would scatter the colour grade, the film
+   overlays and the type scale across ten files for no gain.
+   ---------------------------------------------------------------------
+   The background is one continuous shot, scrubbed frame by frame from the
+   page scroll onto <canvas id="film">. Everything else is an overlay on
+   top of it: a colour grade per scene, then the copy.
+
+   IMPORTANT: elements carrying data-depth / data-reveal / .ch have their
+   `transform` written by script.js every frame. Never give those a CSS
+   transform — use `rotate:` / `scale:` properties or margin-auto instead.
+   ===================================================================== */
+
+:root{
+  --maroon:#5A1F1F;
+  --antique:#8B5A24;
+  --gold:#D4A84F;
+  --ivory:#F7E8C8;
+  --bg:#2B1512;
+  --cream:#FFF1C7;
+  --ink:#3B1A14;
+
+  --f-display:'Cinzel', Georgia, serif;
+  --f-serif:'Cormorant Garamond', Georgia, serif;
+  --f-sans:'Inter', system-ui, -apple-system, sans-serif;
+  --f-tamil:'Noto Serif Tamil','Cormorant Garamond', serif;
+
+  --vh:100vh;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+#root{display:contents}
+html{
+  scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+  overscroll-behavior-y:none;
+  background:#0b0403;
+}
+body{
+  margin:0;
+  background:#0b0403;
+  color:var(--ivory);
+  font-family:var(--f-serif);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overscroll-behavior-y:none;
+}
+img,svg{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+.visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:fixed;top:-120px;left:50%;transform:translateX(-50%);z-index:999;background:var(--maroon);color:var(--cream);padding:.7rem 1.2rem;border:1px solid var(--gold);border-radius:2px;font-family:var(--f-sans);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;transition:top .3s}
+.skip:focus{top:14px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:2px}
+
+/* ======================= SCROLL TRACK + STAGE ====================== */
+.track{position:relative;z-index:0}
+.track .panel{height:var(--vh);scroll-snap-align:start;scroll-snap-stop:always}
+
+.stage{position:fixed;inset:0;height:var(--vh);z-index:2;overflow:hidden;
+  perspective:1400px;perspective-origin:50% 52%}
+
+/* the scroll-scrubbed film */
+.film{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0;background:#0b0403}
+.film-veil{position:absolute;inset:0;z-index:1;background:#080302;pointer-events:none}
+
+.scene{position:absolute;inset:0;overflow:hidden;opacity:0;visibility:hidden;z-index:2;
+  transform-origin:50% 54%;backface-visibility:hidden;pointer-events:none}
+.scene.on{visibility:visible;will-change:transform,opacity,filter}
+.scene.live{pointer-events:auto}
+
+.layer{position:absolute}
+
+/* per-scene colour grade laid over the film — this is what keeps the copy
+   readable and gives each act of the journey its own mood */
+.grade{inset:0}
+.g1{background:
+  radial-gradient(70% 46% at 50% 76%, rgba(20,8,6,.62), transparent 74%),
+  linear-gradient(180deg, rgba(10,5,10,.62) 0%, rgba(20,10,8,.14) 30%, rgba(24,11,8,.30) 62%, rgba(12,5,4,.80) 100%)}
+.g2{background:
+  radial-gradient(56% 40% at 50% 40%, rgba(24,10,9,.74), transparent 78%),
+  linear-gradient(180deg, rgba(14,6,8,.58) 0%, rgba(40,17,12,.20) 40%, rgba(12,5,4,.72) 100%)}
+.g3{background:
+  radial-gradient(70% 58% at 50% 50%, rgba(18,8,7,.72), rgba(18,8,7,.52) 60%, rgba(12,5,4,.70) 100%),
+  linear-gradient(180deg, rgba(10,5,4,.46), rgba(10,5,4,.46))}
+.g4{background:
+  radial-gradient(64% 48% at 50% 44%, rgba(40,17,10,.62), transparent 76%),
+  linear-gradient(180deg, rgba(28,12,8,.50) 0%, rgba(60,26,12,.16) 42%, rgba(12,5,4,.76) 100%)}
+
+/* ======================= TRANSITION LIGHTING ======================
+   Kept deliberately soft: the film underneath is already continuous, so a
+   hard wipe between scenes would read as a cut that isn't there. */
+.bloom,.sweep{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:30}
+.bloom{background:radial-gradient(52% 44% at 50% 52%, rgba(255,239,196,.72) 0%, rgba(255,206,126,.40) 28%, transparent 68%);
+  mix-blend-mode:screen}
+.sweep{z-index:31;mix-blend-mode:screen;filter:blur(22px);
+  background:linear-gradient(104deg, transparent 28%, rgba(255,222,158,.16) 42%,
+    rgba(255,242,206,.34) 50%, rgba(255,222,158,.16) 58%, transparent 72%)}
+
+/* ============================ FILM FX ============================= */
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:40;
+  background:radial-gradient(132% 100% at 50% 45%, transparent 36%, rgba(20,8,7,.32) 72%, rgba(10,4,3,.78) 100%)}
+.grain{position:fixed;inset:-140px;pointer-events:none;z-index:41;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grainShift 1.05s steps(4) infinite}
+@keyframes grainShift{
+  0%{transform:translate(0,0)}25%{transform:translate(-24px,14px)}
+  50%{transform:translate(16px,-20px)}75%{transform:translate(-10px,-8px)}100%{transform:translate(0,0)}}
+
+.fx{inset:0;pointer-events:none;overflow:visible}
+.petal{position:absolute;top:-10%;left:var(--x);width:var(--w);height:calc(var(--w)*.62);
+  border-radius:100% 0 100% 0;
+  background:linear-gradient(135deg, rgba(255,224,216,.95), rgba(226,124,120,.72) 55%, rgba(163,58,58,.6));
+  box-shadow:0 0 12px rgba(255,180,150,.20);
+  opacity:0;filter:blur(var(--b));
+  animation:petalFall var(--dur) linear var(--delay) infinite;will-change:transform,opacity}
+@keyframes petalFall{
+  0%{opacity:0;transform:translate3d(0,-12vh,0) rotate3d(1,1,0,0deg)}
+  8%{opacity:var(--o)}
+  50%{transform:translate3d(var(--drift),55vh,0) rotate3d(1,1,.4,420deg)}
+  92%{opacity:var(--o)}
+  100%{opacity:0;transform:translate3d(calc(var(--drift)*-.5),122vh,0) rotate3d(1,1,.4,900deg)}}
+
+.dust{position:absolute;left:var(--x);top:var(--y);width:var(--w);height:var(--w);border-radius:50%;
+  background:radial-gradient(circle, rgba(255,242,206,.98), rgba(212,168,79,.28) 58%, transparent 70%);
+  opacity:0;animation:dustFloat var(--dur) ease-in-out var(--delay) infinite;will-change:transform,opacity}
+@keyframes dustFloat{
+  0%{opacity:0;transform:translate3d(0,0,0) scale(.5)}
+  25%{opacity:var(--o)}
+  60%{opacity:calc(var(--o)*.5);transform:translate3d(var(--drift),-15vh,0) scale(1)}
+  100%{opacity:0;transform:translate3d(calc(var(--drift)*1.7),-32vh,0) scale(.45)}}
+
+/* ============================ ORNAMENTS =========================== */
+.orn{display:flex;justify-content:center}
+.orn svg{width:clamp(130px,17vw,210px);height:auto}
+.orn .o-s{fill:none;stroke:var(--gold);stroke-width:1.2;stroke-linecap:round;opacity:.85}
+.orn .o-f{fill:var(--gold);opacity:.9}
+.ht path{fill:var(--gold)}
+.ch{display:inline-block;will-change:transform,opacity}
+.names .ch{
+  background:linear-gradient(175deg,#FFF9E9 10%, #F4DCA4 40%, #D4A84F 66%, #B07C35 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ============================ SCENE 01 =========================== */
+.tam{font-family:var(--f-tamil);font-weight:300}
+.s1-copy{left:0;right:0;margin-inline:auto;bottom:26%;width:min(92vw,900px);text-align:center;z-index:12}
+.s1-copy::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:152%;height:268%;border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(closest-side, rgba(20,8,7,.80), rgba(20,8,7,.44) 50%, transparent 78%);
+  filter:blur(14px)}
+.s1-copy .sm{font-size:clamp(.92rem,1.8vw,1.35rem);color:rgba(255,241,199,.84);letter-spacing:.06em;
+  margin:0 0 .9rem;text-shadow:0 2px 14px rgba(12,5,4,.9)}
+.s1-copy .title{font-size:clamp(1.9rem,5.6vw,4rem);font-weight:400;margin:0;line-height:1.28;color:var(--cream);
+  text-shadow:0 0 40px rgba(255,190,110,.55), 0 2px 22px rgba(0,0,0,.55)}
+.s1-copy .orn{margin:1.5rem 0 1.1rem;opacity:.85}
+.s1-names{margin:0;font-family:var(--f-display);font-size:clamp(.84rem,1.7vw,1.15rem);letter-spacing:.42em;
+  text-transform:uppercase;color:var(--gold);text-indent:.42em;text-shadow:0 2px 16px rgba(12,5,4,.95)}
+.s1-names em{font-style:normal;margin:0 .55em;color:rgba(255,241,199,.6)}
+
+.hint{position:absolute;left:0;right:0;margin-inline:auto;bottom:12%;width:max-content;z-index:14;
+  font-family:var(--f-sans);font-size:.66rem;letter-spacing:.36em;text-transform:uppercase;
+  color:rgba(255,241,199,.9);padding:.6rem 1rem 0;text-indent:.36em;
+  text-shadow:0 2px 14px rgba(12,5,4,.95), 0 0 26px rgba(12,5,4,.8)}
+.hint::after{content:'';display:block;width:1px;height:30px;margin:.85rem auto 0;
+  background:linear-gradient(180deg,var(--gold),transparent);animation:hintPulse 2.6s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{opacity:.2;scale:1 .6;translate:0 -6px}50%{opacity:1;scale:1 1;translate:0 0}}
+
+/* ============================ SCENE 02 =========================== */
+.s2-copy{left:0;right:0;margin-inline:auto;top:26%;width:min(92vw,880px);text-align:center;z-index:12}
+.s2-copy::before,.s4-copy::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:138%;height:138%;border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(closest-side, rgba(20,9,7,.74), rgba(20,9,7,.40) 52%, transparent 80%);
+  filter:blur(18px)}
+.eyebrow{margin:0 0 1.6rem;font-family:var(--f-sans);font-weight:300;
+  font-size:clamp(.62rem,1.3vw,.78rem);letter-spacing:.38em;text-transform:uppercase;
+  color:rgba(255,241,199,.72);text-indent:.38em;text-shadow:0 2px 12px rgba(12,5,4,.8)}
+.names{margin:0;display:flex;flex-direction:column;align-items:center;gap:.06em;line-height:1}
+.names .nm{font-family:var(--f-display);font-weight:500;
+  font-size:clamp(2.5rem,8.4vw,6.2rem);letter-spacing:.09em;text-indent:.09em;color:var(--cream);
+  filter:drop-shadow(0 8px 34px rgba(0,0,0,.55))}
+.names .amp{display:block;margin:.14em 0;color:var(--gold);font-family:var(--f-serif);font-style:italic;
+  font-size:clamp(1.5rem,3.6vw,2.3rem)}
+.names .amp svg{width:clamp(28px,4.2vw,50px);height:auto;margin:0 auto;
+  filter:drop-shadow(0 0 18px rgba(255,190,110,.7));animation:heartGlow 4.5s ease-in-out infinite}
+.names .amp.small{font-size:clamp(1.2rem,2.8vw,1.8rem);opacity:.85}
+@keyframes heartGlow{0%,100%{opacity:.82;scale:1}50%{opacity:1;scale:1.07}}
+.s2-copy .orn{margin:2rem 0 1.4rem}
+.invite{margin:0;font-size:clamp(1rem,2.1vw,1.42rem);font-weight:300;line-height:1.85;
+  color:rgba(255,241,199,.88);letter-spacing:.035em;text-shadow:0 2px 14px rgba(12,5,4,.8)}
+
+/* ============================ SCENE 03 =========================== */
+.card-hold{inset:0;display:grid;place-items:center;
+  padding:clamp(26px,5vh,60px) clamp(16px,4vw,48px) clamp(84px,13vh,132px)}
+.card{position:relative;width:min(92vw,620px);
+  padding:clamp(34px,4.4vw,50px) clamp(22px,4.2vw,50px) clamp(24px,3vw,34px);
+  color:var(--ink);text-align:center;border-radius:3px 4px 3px 4px;overflow:hidden;
+  transform-style:preserve-3d;
+  background:
+    radial-gradient(120% 90% at 18% 8%, rgba(255,255,255,.55), transparent 55%),
+    radial-gradient(90% 80% at 85% 92%, rgba(190,150,96,.22), transparent 60%),
+    linear-gradient(160deg,#FCF2DC 0%, #F6E7C7 45%, #EEDAB2 100%);
+  box-shadow:0 46px 100px rgba(6,3,2,.75), 0 3px 0 rgba(255,255,255,.35) inset, 0 -2px 26px rgba(120,70,30,.18) inset}
+.card::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:.5;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23p)' opacity='.35'/%3E%3C/svg%3E")}
+.card .sheen{position:absolute;top:-30%;left:0;width:60%;height:160%;pointer-events:none;z-index:3;opacity:0;
+  background:linear-gradient(100deg, transparent 0%, rgba(255,247,222,0) 30%, rgba(255,246,214,.85) 50%, rgba(255,247,222,0) 70%, transparent 100%);
+  mix-blend-mode:overlay;filter:blur(3px)}
+.card-frame{position:absolute;inset:clamp(10px,1.5vw,16px);border:1px solid rgba(139,90,36,.42);border-radius:2px;pointer-events:none}
+.card-frame::before{content:'';position:absolute;inset:5px;border:1px solid rgba(139,90,36,.2)}
+.card>*:not(.card-frame):not(.sheen){position:relative;z-index:1}
+
+.card .kicker{margin:0 0 .85rem;font-family:var(--f-tamil);font-size:clamp(.85rem,1.9vw,1.05rem);
+  color:var(--maroon);opacity:.72;letter-spacing:.05em}
+.card-title{margin:0;font-family:var(--f-display);font-weight:500;
+  font-size:clamp(1rem,2.5vw,1.45rem);letter-spacing:.46em;text-indent:.46em;text-transform:uppercase;color:var(--maroon)}
+.card .orn{margin:1rem 0 1.05rem}
+.card .orn .o-s{stroke:var(--antique);opacity:.8} .card .orn .o-f{fill:var(--antique)}
+.card-names{margin:0 0 .2rem;font-family:var(--f-display);font-weight:500;line-height:1.12;
+  font-size:clamp(1.8rem,5.6vw,3.05rem);letter-spacing:.05em;color:var(--maroon);
+  display:flex;flex-direction:column;align-items:center}
+.card-names em{font-family:var(--f-serif);font-style:italic;font-weight:400;
+  font-size:.42em;letter-spacing:.02em;color:var(--antique);margin:.18em 0}
+.details{margin:clamp(18px,2.8vw,26px) 0 0;display:grid;gap:clamp(14px,2.2vw,20px);
+  grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid rgba(139,90,36,.28);padding-top:clamp(16px,2.6vw,24px)}
+.details .wide{grid-column:1/-1;border-top:1px solid rgba(139,90,36,.2);padding-top:clamp(16px,2.6vw,22px)}
+.details dt{font-family:var(--f-sans);font-weight:500;font-size:clamp(.58rem,1.2vw,.68rem);
+  letter-spacing:.32em;text-transform:uppercase;color:var(--antique);margin-bottom:.55rem;text-indent:.32em}
+.details dd{margin:0;font-family:var(--f-serif);font-weight:500;
+  font-size:clamp(1.02rem,2.35vw,1.34rem);line-height:1.5;color:var(--ink);letter-spacing:.015em}
+.details .city{font-weight:400;font-size:.88em;color:rgba(59,26,20,.72)}
+.blessing{margin:clamp(16px,2.4vw,24px) 0 0;font-style:italic;font-weight:400;
+  font-size:clamp(.92rem,2vw,1.12rem);color:rgba(90,31,31,.82)}
+.card-temple{margin-top:clamp(10px,1.6vw,14px);display:flex;justify-content:center;opacity:.6}
+.card-temple svg{width:clamp(130px,22vw,190px);height:auto}
+.card-temple .t{fill:none;stroke:var(--maroon);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.card-temple .tf{fill:var(--maroon);opacity:.9}
+
+/* ============================ SCENE 04 =========================== */
+.s4-copy{left:0;right:0;margin-inline:auto;top:19%;width:min(92vw,820px);text-align:center;z-index:12}
+.s4-copy .names .nm{font-size:clamp(1.9rem,6.3vw,4.4rem)}
+.s4-copy .orn{margin:1.5rem 0 1rem}
+.closing{margin:0 auto;max-width:34ch;font-size:clamp(1rem,2.1vw,1.32rem);font-weight:300;line-height:1.8;
+  color:rgba(255,245,222,.96);text-shadow:0 2px 14px rgba(12,5,4,.8)}
+.sub{margin:.9rem 0 0;font-family:var(--f-sans);font-weight:300;font-size:clamp(.62rem,1.3vw,.76rem);
+  letter-spacing:.32em;text-transform:uppercase;color:rgba(255,241,199,.7);text-indent:.32em}
+.cta{margin:clamp(20px,3.2vw,32px) 0 0;display:flex;gap:clamp(12px,2vw,18px);justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:.95rem 2.1rem;
+  font-family:var(--f-sans);font-weight:400;font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;text-indent:.28em;
+  color:var(--cream);border:1px solid rgba(212,168,79,.75);border-radius:2px;
+  background:rgba(40,16,14,.45);backdrop-filter:blur(6px);
+  transition:background .5s cubic-bezier(.22,.61,.36,1), box-shadow .5s, color .4s, translate .5s}
+.btn:hover,.btn:focus-visible{background:rgba(212,168,79,.18);
+  box-shadow:0 0 34px rgba(255,196,110,.34), 0 0 0 1px rgba(212,168,79,.45) inset;translate:0 -2px}
+.btn-solid{background:linear-gradient(180deg, rgba(212,168,79,.94), rgba(160,113,44,.94));color:#2B1512;
+  border-color:rgba(255,226,160,.8);font-weight:500}
+.btn-solid:hover,.btn-solid:focus-visible{background:linear-gradient(180deg,#F0D293,#C99A43);color:#2B1512}
+.blessing-end{margin:clamp(18px,2.8vw,28px) 0 0;font-family:var(--f-tamil);font-size:clamp(.88rem,1.9vw,1.1rem);
+  color:rgba(255,241,199,.74);letter-spacing:.08em;text-shadow:0 2px 12px rgba(30,12,8,.8)}
+
+/* ============================ UI CHROME =========================== */
+.chapters{position:fixed;left:50%;bottom:clamp(18px,3.2vh,30px);transform:translateX(-50%);z-index:45;
+  display:flex;align-items:center;gap:clamp(6px,1.2vw,12px);padding:.45rem .75rem;border-radius:100px;
+  background:rgba(20,9,7,.42);backdrop-filter:blur(10px);border:1px solid rgba(212,168,79,.16)}
+.chapters i{position:relative;width:clamp(12px,2.4vw,26px);height:1px;background:rgba(212,168,79,.22);overflow:hidden}
+.chapters i b{position:absolute;inset:0;background:var(--gold);transform-origin:left center;scale:var(--f,0) 1}
+.chapters button{position:relative;padding:.5rem .45rem;font-family:var(--f-sans);font-size:.62rem;
+  letter-spacing:.2em;color:rgba(255,241,199,.42);transition:color .5s}
+.chapters button::after{content:'';position:absolute;left:50%;bottom:2px;width:0;height:1px;background:var(--gold);
+  transform:translateX(-50%);transition:width .6s cubic-bezier(.22,.61,.36,1)}
+.chapters button:hover{color:rgba(255,241,199,.85)}
+.chapters button[aria-current="true"]{color:var(--gold)}
+.chapters button[aria-current="true"]::after{width:100%}
+
+#music{position:fixed;top:clamp(16px,2.6vh,26px);right:clamp(16px,2.6vw,28px);z-index:46;
+  width:46px;height:46px;display:grid;place-items:center;border-radius:50%;
+  border:1px solid rgba(212,168,79,.32);background:rgba(20,9,7,.42);backdrop-filter:blur(10px);
+  color:rgba(255,241,199,.72);transition:border-color .5s, color .5s, box-shadow .5s}
+#music:hover{border-color:rgba(212,168,79,.7);color:var(--gold);box-shadow:0 0 22px rgba(255,196,110,.22)}
+#music .note{font-size:1.05rem;line-height:1}
+#music .bars{display:none;align-items:flex-end;gap:2px;height:14px}
+#music .bars i{width:2px;background:var(--gold);animation:eq 1.1s ease-in-out infinite}
+#music .bars i:nth-child(1){height:6px;animation-delay:0s}
+#music .bars i:nth-child(2){height:13px;animation-delay:.2s}
+#music .bars i:nth-child(3){height:9px;animation-delay:.4s}
+#music[aria-pressed="true"] .note{display:none}
+#music[aria-pressed="true"] .bars{display:flex}
+#music[aria-pressed="true"]{color:var(--gold);border-color:rgba(212,168,79,.6)}
+#music[data-unavailable="true"]{opacity:.35}
+@keyframes eq{0%,100%{scale:1 .4}50%{scale:1 1}}
+
+/* ============================ RESPONSIVE ========================== */
+@media (max-height:820px){
+  .card{width:min(92vw,580px);padding:clamp(28px,3.6vw,40px) clamp(20px,3.6vw,42px) clamp(20px,2.4vw,28px)}
+  .card-names{font-size:clamp(1.7rem,5vw,2.6rem)}
+  .card .orn svg{width:clamp(110px,14vw,160px)}
+  .details{margin-top:16px;gap:12px;padding-top:14px}
+  .details dd{font-size:clamp(.98rem,2vw,1.18rem)}
+  .blessing{margin-top:14px;font-size:1rem}
+  .card-temple{margin-top:8px} .card-temple svg{width:clamp(110px,18vw,150px)}
+}
+@media (max-width:900px){
+  .details{grid-template-columns:1fr;text-align:center}
+  .details .d{border-top:1px solid rgba(139,90,36,.18);padding-top:1rem}
+  .details .d:first-child{border-top:0;padding-top:0}
+}
+@media (max-width:640px){
+  .s1-copy{bottom:25%}
+  .hint{bottom:11%}
+  .s2-copy{top:24%;width:94vw}
+  .s4-copy{top:13%}
+  .cta{flex-direction:column;align-items:stretch;padding:0 6vw}
+  .chapters{bottom:14px}
+}
+@media (max-height:680px) and (orientation:landscape){
+  .s1-copy .title{font-size:clamp(1.4rem,4vw,2.4rem)}
+  .names .nm{font-size:clamp(1.8rem,6vw,3.2rem)!important}
+  .blessing-end{display:none}
+}
+
+/* ============================ REDUCED MOTION ====================== */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .grain{display:none}
+  .flame,.hint::after,.names .amp svg{animation:none!important}
+  .petal,.dust{display:none}
+  .card .sheen{display:none}
+}

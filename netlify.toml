@@ -1,0 +1,23 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# The frame sequence is content-stable and large — let browsers keep it.
+[[headers]]
+  for = "/frames/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Single page: send everything to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
